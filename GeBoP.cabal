@@ -3,7 +3,7 @@ Synopsis:       Several games
 Description: 
   The games: Ataxx, Bamp, Halma, Hez, Kram, Nim, Reversi, TicTacToe, and Zenix
 Homepage:       http://www.haskell.org/haskellwiki/GeBoP
-Version:        1.7.1
+Version:        1.7.2
 License:        BSD3
 License-file:   LICENSE.txt
 Author:         Maarten Löffler
@@ -12,7 +12,7 @@ Stability:      Stable
 Cabal-Version:  >= 1.2
 Build-type:     Simple
 Category:       Game
-Tested-with:    GHC == 6.10.4
+Tested-with:    GHC == 6.10.4, GHC == 6.12.1, GHC == 6.12.3
 Extra-Source-Files:
                 changelog.txt
                 readme.txt,
@@ -110,7 +110,7 @@ Data-files:     gebop.ico,
 
 Executable gebop
   Build-Depends:
-                base < 3.1, 
+                base < 5, 
                 wxcore >= 0.11 && < 0.13,
                 wx >= 0.11 && < 0.13,
                 haskell98 < 1.1, 

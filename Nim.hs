@@ -7,7 +7,7 @@ module Nim (Nim, nim) where
 
 import Game
 import Graphics.UI.WX
-import Graphics.UI.WXCore
+-- import Graphics.UI.WXCore
 import Tools
 
 data Nim = Nim Int deriving (Show, Eq)

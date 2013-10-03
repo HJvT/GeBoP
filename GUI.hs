@@ -14,7 +14,7 @@ import Tools              hiding (field)
 import List
 
 version :: String
-version = "1.7.1" 
+version = "1.7.2" 
 
 gui :: [GeneralGame] -> IO ()
 gui games = do
@@ -313,12 +313,12 @@ game mdiparent g pr newg = do
     startClock = do t <- getTree
                     v <- sliderGetValue $ ss !!! player t
                     let int = 1000 * 2 ^ v
-                    timerStart clock int True
+                    _ <- timerStart clock int True
                     info "clock started"
                     
     next :: Int -> IO ()
     next n = do t <- getTree
-                updateTree (shear n)
+                _ <- updateTree (shear n)
                 u <- getTree
                 b <- varGet varb
                 bRefresh b
@@ -344,7 +344,7 @@ game mdiparent g pr newg = do
                js <- randomList
                let p' = path followcombination js t
 --{               let p = path followbest js t
-               updateTree $ step p'
+               _ <- updateTree $ step p'
                u <- getTree
 
                when (val t /= val u) $ sequence_ $ map repaint ps
@@ -744,7 +744,7 @@ html w f = do
   d <- dialog w [text := "Help"]
   -- w <- htmlWindowCreate d (-1) (rect (point 0 0) (size 640 480)) 0 []
   w' <- htmlWindowCreate d (-1) (rect (point 0 0) (Size 640 480)) 0 []
-  htmlWindowLoadPage w' f
+  _  <- htmlWindowLoadPage w' f
   set d [layout := widget w', visible := True]
   return ()
 
@@ -770,7 +770,7 @@ bitmapImageList il name' = do
   bmp    <- bitmapCreateLoad ("images\\" ++ name' ++      ".bmp") wxBITMAP_TYPE_ANY
   mskbmp <- bitmapCreateLoad ("images\\" ++ name' ++ "_mask.bmp") wxBITMAP_TYPE_ANY 
   bitmapSetDepth mskbmp 1
-  imageListAddBitmap il bmp mskbmp
+  _ <- imageListAddBitmap il bmp mskbmp
   return ()
 
 bitmapHighImageList :: ImageList () -> String -> IO ()
@@ -778,5 +778,5 @@ bitmapHighImageList il name' = do
   bmp    <- bitmapCreateLoad ("images\\high_" ++ name' ++      ".bmp") wxBITMAP_TYPE_ANY
   mskbmp <- bitmapCreateLoad ("images\\"      ++ name' ++ "_mask.bmp") wxBITMAP_TYPE_ANY 
   bitmapSetDepth mskbmp 1
-  imageListAddBitmap il bmp mskbmp
+  _ <- imageListAddBitmap il bmp mskbmp
   return ()

@@ -133,7 +133,7 @@ wire f ps = do w <- timer f ps
                return w
 
 send :: Wire -> IO ()
-send w = do timerStart w 1 True
+send w = do _ <- timerStart w 1 True
             return ()
 
 wait :: Window a -> Int -> IO () -> IO ()
