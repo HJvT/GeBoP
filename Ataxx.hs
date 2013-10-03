@@ -8,8 +8,8 @@ module Ataxx (Ataxx, ataxx) where
 import Game
 import Array
 -- import Graphics.UI.WX
-import Graphics.UI.WX     hiding (border)
-import Graphics.UI.WXCore
+import Graphics.UI.WX     hiding (border, point)
+import Graphics.UI.WXCore hiding (point)
 import Tools
 
 data Ataxx = Ataxx (Array (Int, Int) (Maybe Player)) deriving (Eq, Show)
@@ -52,8 +52,9 @@ instance Game Ataxx where
       count (Nothing : fs) =      count fs
       count (Just 0  : fs) =  1 + count fs
       count (Just 1  : fs) = -1 + count fs
+      count _              = error "value: Unexpected value"
 
-  board p pr vart ia move = do
+  board p pr vart ia move' = do
 
     marble <- bitmapCreateLoad "images\\marble.bmp" wxBITMAP_TYPE_ANY
     varg <- varCreate $ grate rectZero 0 (0, 0) sizeZero
@@ -79,7 +80,7 @@ instance Game Ataxx where
           )
         drawGrate dc g [brushKind := BrushTransparent]
         for 0 (bsz - 1) (\i -> for 0 (bsz - 1) (\j ->
-          case st ! (i, j) of Just p  -> drawPiece p dc $ field g (i, j)
+          case st ! (i, j) of Just p' -> drawPiece p' dc $ field g (i, j)
                               Nothing -> return ()
           ))
         case e of
@@ -88,21 +89,21 @@ instance Game Ataxx where
         if human pr !! player t && allMoves (boardsize pr) (player t) st == [Nothing]
           then wait p 1 $ do
             when ia $ infoDialog p "You can't move!" "You have to skip this turn, since there are no possible moves."
-            move 0
+            move' 0
           else return ()
 
       onclick :: Point -> IO ()
-      onclick pt = do 
+      onclick point = do 
         t <- varGet vart
         g <- varGet varg
         let Ataxx st = state t
-            n        = locate g pt
+            n        = locate g point 
         when (inRange (bounds st) n) $ when (st ! n == Just (player t)) $ do
           varSet vare $ Just n
           repaint p
 
       onunclick :: Point -> IO ()
-      onunclick pt = do 
+      onunclick point = do 
         t <- varGet vart
         g <- varGet varg
         e <- varGet vare
@@ -110,12 +111,12 @@ instance Game Ataxx where
           Nothing -> return ()
           Just m  -> do
             let Ataxx st = state t
-                n        = locate g pt
+                n        = locate g point 
             varSet vare Nothing
             repaint p
             case lookup (Just (m, n)) $ zip (allMoves (boardsize pr) (player t) st) [0..] of
               Nothing -> return ()
-              Just  i -> move i
+              Just  i -> move' i
 
     set p [ on click    := onclick
           , on unclick  := onunclick
@@ -124,37 +125,42 @@ instance Game Ataxx where
           ]
 
 allMoves :: Int -> Player -> Array (Int, Int) (Maybe Player) -> [AtaxxMove]
-allMoves bsz p s
+allMoves _bsz p s
     | (null $ valid p s) && (not $ null $ valid (1 - p) s) = [Nothing]
     | dead (1 - p) (elems s)                               = []
     | otherwise                                            = map (Just) $ valid p s
     where
       valid :: Player -> Array (Int, Int) (Maybe Player) -> [((Int, Int), (Int, Int))]
-      valid p s = concatMap complete $ filter ((== Just p) . (s !)) $ indices s
+      valid p' s' = concatMap complete $ filter ((== Just p') . (s' !)) $ indices s'
         where
           complete :: (Int, Int) -> [((Int, Int), (Int, Int))]
           complete xy = zip (repeat xy) (from xy)
+
           from :: (Int, Int) -> [(Int, Int)]
           from xy = filter (flip check Nothing) $ map (xy +-) $ grows ++ jumps
+
           check :: (Int, Int) -> Maybe Player -> Bool
           check m f | not $ inRange (bounds s) m = False
                     | otherwise                  = s ! m == f
+
       dead :: Player -> [Maybe Player] -> Bool
-      dead p (Just q  : fs) = p /= q && dead p fs
-      dead p (Nothing : fs) =           dead p fs
-      dead p []             = True
+      dead p' (Just q  : fs) = p' /= q && dead p' fs
+      dead p' (Nothing : fs) =           dead p' fs
+      dead _  []             = True
 
 move :: Int -> AtaxxMove -> (Player, Ataxx) -> (Player, Ataxx)
-move bsz (Just (f, t)) (p, Ataxx s) = (1 - p, Ataxx $ s // (phase1 ++ phase2))
+move _bsz (Just (f, t)) (p, Ataxx s) = (1 - p, Ataxx $ s // (phase1 ++ phase2))
   where 
     phase1 :: [((Int, Int), Maybe Player)]
     phase1 | t `elem` map (+- f) jumps = [(f, Nothing), (t, Just p)]
            | otherwise                 = [              (t, Just p)]
+
     phase2 :: [((Int, Int), Maybe Player)]
     phase2 = zip (filter (flip check $ Just $ 1 - p) $ map (+- t) grows) $ repeat $ Just p
+
     check :: (Int, Int) -> Maybe Player -> Bool
-    check m f | not $ inRange (bounds s) m = False
-              | otherwise                  = s ! m == f
+    check m f' | not $ inRange (bounds s) m = False
+               | otherwise                  = s ! m == f'
 move _ Nothing (p, rs) = (1 - p, rs)
 
 grows :: [(Int, Int)]
@@ -168,8 +174,8 @@ jumps = concat [[(x, 2), (-x, -2), (-2, x), (2, -x)] | x <- [-1 .. 2]]
 
 drawPiece :: Player -> DC () -> Rect -> IO ()
 drawPiece p dc (Rect x y w h) = do
-  case p of 0 -> set dc [brushColor := rgb 32 96 192]
-            1 -> set dc [brushColor := rgb 192 96 32]
+  case p of 0 -> set dc [brushColor := rgb 32  96 (192 :: Int)]
+            1 -> set dc [brushColor := rgb 192 96 (32  :: Int)]
             _ -> set dc [brushColor := white]
   circle dc (pt (x + w `div` 2) (y + h `div` 2)) (2 * (min w h) `div` 5) []
 

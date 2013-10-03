@@ -6,17 +6,15 @@
 
 module GUI (gui, version) where
 
-import Game
--- import Graphics.UI.WX
-import Graphics.UI.WX     hiding (bitmap)
+import Game               -- hiding (name)
+import Graphics.UI.WX     hiding (bitmap, children, click, selections, stop)
 import Graphics.UI.WXCore
-import Random
 import Char
-import Tools
+import Tools              hiding (field)
 import List
 
 version :: String
-version = "1.7" 
+version = "1.7.1" 
 
 gui :: [GeneralGame] -> IO ()
 gui games = do
@@ -193,8 +191,8 @@ game mdiparent g pr newg = do
   clock <- timer f []
                     
   ps <- sequence $ replicate (players pr) $ panel f []
-  ss <- sequence $ map (\p -> hslider p False 0 10 []) ps
-  bs <- sequence $ map (\p -> singleListBox p []) ps
+  ss <- sequence $ map (\p' -> hslider p' False 0 10 []) ps
+  bs <- sequence $ map (\p' -> singleListBox p' []) ps
 
 --{  field <- statusField []
 
@@ -225,9 +223,10 @@ game mdiparent g pr newg = do
     logo 3 = logopurple
     logo 4 = logobrown
     logo 5 = logogrey
+    logo _ = error "logo: Unexpected value"
     
     onpaintplayer :: Int -> DC () -> Rect -> IO ()
-    onpaintplayer i dc r@(Rect x y w h) = do
+    onpaintplayer i dc (Rect _x _y w _h) = do
       let xi = (w - 40) `div` 2
       drawBitmap dc (logo i) (pt xi 10) True []
       t <- getTree
@@ -243,16 +242,16 @@ game mdiparent g pr newg = do
       t <- getTree
       when (player t == i) $ send clock
 
-    playerpanel i p sli box = do
-      but <- button p []
-      stt <- staticText p []
+    playerpanel i p' sli box = do
+      but <- button p' []
+      stt <- staticText p' []
       itemAppend box $ ""
 
       set sli [ clientSize := Size 60 20
               , color      := setLum 0.25 $ colorplayer i
               , bgcolor    := setLum 0.95 $ colorplayer i
               , on command := do v <- sliderGetValue sli
-                                 set stt [text := show (2 ^ v) ++ " sec"]
+                                 set stt [text := show ((2 :: Int) ^ v) ++ " sec"]
               , visible    := not (human pr !!! i)
               , selection  := 3
               ]
@@ -276,33 +275,33 @@ game mdiparent g pr newg = do
                                  s <- get box selection
                                  mapM_ (\b -> set b [selection := s]) bs
               ]
-      set p [ bgcolor    := setLum 0.95 $ colorplayer i
-            , clientSize := Size 80 0
-            , on paint   := onpaintplayer i
-            , layout     := margin 4 $ column 4
-              [ space 72 210
-              , hfill                $ widget sli
-              ,         hfloatCentre $ widget stt
-              ,         hfloatCentre $ widget but
-              , vfill $ hfloatCentre $ widget box
-              ]
-            ]
+      set p' [ bgcolor    := setLum 0.95 $ colorplayer i
+             , clientSize := Size 80 0
+             , on paint   := onpaintplayer i
+             , layout     := margin 4 $ column 4
+               [ space 72 210
+               , hfill                $ widget sli
+               ,         hfloatCentre $ widget stt
+               ,         hfloatCentre $ widget but
+               , vfill $ hfloatCentre $ widget box
+               ]
+             ]
       return ()
 
     boxInsert :: Player -> String -> IO ()
-    boxInsert p s = do
-      let b = (bs !!! p)
+    boxInsert p' s = do
+      let b = (bs !!! p')
       i <- get b itemCount
-      vs <- mapM (\p -> get (bs !!! p) (item $ i - 1)) [p .. length bs - 1]
-      when (not $ all null vs) $ mapM_ (\b -> itemAppend b "") bs
-      i <- get b itemCount
-      set b [item (i - 1) := s]
-      mapM_ (\b -> set b [selection := i - 1]) bs
+      vs <- mapM (\p'' -> get (bs !!! p'') (item $ i - 1)) [p' .. length bs - 1]
+      when (not $ all null vs) $ mapM_ (\b' -> itemAppend b' "") bs
+      i' <- get b itemCount
+      set b [item (i' - 1) := s]
+      mapM_ (\b' -> set b' [selection := i' - 1]) bs
 
     win :: Int -> IO Bool
-    win i = do
+    win i' = do
       t <- getTree
-      return $ (movesnr t == 0) && (val t !!! i == 1)
+      return $ (movesnr t == 0) && (val t !!! i' == 1)
 
     gamename = (\(c : cs) -> toUpper c : cs) $ name g
 
@@ -343,14 +342,14 @@ game mdiparent g pr newg = do
     think :: IO ()
     think = do t <- getTree
                js <- randomList
-               let p = path followcombination js t
+               let p' = path followcombination js t
 --{               let p = path followbest js t
-               updateTree $ step p
+               updateTree $ step p'
                u <- getTree
 
                when (val t /= val u) $ sequence_ $ map repaint ps
                b <- varGet varb
-               bUpdatePath b p
+               bUpdatePath b p'
 
                return ()
 
@@ -469,7 +468,7 @@ brain mdiparent pr vart varb newg = do
 
   bPlayer   <- staticBitmapCreate pRight (-1) (logos !!! 0) rectNull (-1)
 
-  tPlayer   <- staticText pRight []
+  -- tPlayer   <- staticText pRight []
   tMind     <- staticText pInfo []
   tMaxd     <- staticText pInfo []
   tVolume   <- staticText pInfo []
@@ -487,8 +486,8 @@ brain mdiparent pr vart varb newg = do
     gamename = (\(c : cs) -> toUpper c : cs) $ name g
 
     getData :: TreeItem -> IO [Int]
-    getData item = do
-      mmovs <- unsafeTreeCtrlGetItemClientData tc item
+    getData treeItem = do
+      mmovs <- unsafeTreeCtrlGetItemClientData tc treeItem 
       case mmovs of Just movs -> return movs
                     Nothing   -> return []
 
@@ -529,63 +528,63 @@ brain mdiparent pr vart varb newg = do
       line dc (pt x 20) (pt (x + w) 20) []
 
     onTreeEvent :: EventTree -> IO ()
-    onTreeEvent (TreeItemExpanding item veto) | treeItemIsOk item = do
+    onTreeEvent (TreeItemExpanding treeItem _veto) | treeItemIsOk treeItem = do
       wxcBeginBusyCursor
-      children <- treeCtrlGetChildren tc item
-      mapM_ visualise children
+      children' <- treeCtrlGetChildren tc treeItem 
+      mapM_ visualise children'
       wxcEndBusyCursor
       propagateEvent
-    onTreeEvent (TreeSelChanged item olditem) | treeItemIsOk item = do
+    onTreeEvent (TreeSelChanged treeItem _olditem) | treeItemIsOk treeItem = do
       wxcBeginBusyCursor
-      selectRight item
+      selectRight treeItem 
       wxcEndBusyCursor
       propagateEvent
     onTreeEvent _ = propagateEvent
 
     visualise :: TreeItem -> IO ()
-    visualise item = do
-      c <- treeCtrlItemHasChildren tc item
-      when (c == 0) $ giveBirth item
-      updateThickness item
-      updateImages item
+    visualise treeItem = do
+      c <- treeCtrlItemHasChildren tc treeItem 
+      when (c == 0) $ giveBirth treeItem 
+      updateThickness treeItem 
+      updateImages treeItem 
 
     selectRight :: TreeItem -> IO ()
-    selectRight item = do
-      updateRight item
+    selectRight treeItem = do
+      updateRight treeItem 
       t <- varGet varu
       staticBitmapSetBitmap bPlayer (logos !!! player t)
       when (movesnr t == 0) $ staticBitmapSetBitmap bPlayer (if any (== 1) (val t) then winner else leeg)
       repaint pBoard
 
     updateRight :: TreeItem -> IO ()
-    updateRight item = do
-      t <- gametree item
+    updateRight treeItem = do
+      t <- gametree treeItem 
       varSet varu t
       set tMind     [text := "complete depth: " ++ show (mind     t)]
       set tMaxd     [text := "maximum depth: "  ++ show (maxd     t)]
       set tVolume   [text := "volume: "         ++ show (volume   t)]
       repaint pValue
 
-    bClose :: IO ()
-    bClose = close f
+    bClose' :: IO ()
+    bClose' = close f
 
-    bUpdatePath :: [Int] -> IO ()
-    bUpdatePath path = do
+    bUpdatePath' :: [Int] -> IO ()
+    bUpdatePath' path' = do
       root <- treeCtrlGetRootItem tc
-      updatePath root path
+      updatePath root path'
      where
       updatePath :: TreeItem -> [Int] -> IO ()
-      updatePath item path = do
-        updateThickness item
-        updateImages item
-        ifIO (treeCtrlIsSelected tc item) $ updateRight item
-        ifIO (treeCtrlIsExpanded tc item) $ case path of
-          (i:is) -> do cs <- treeCtrlGetChildren tc item
+      updatePath treeItem path'' = do
+        updateThickness treeItem 
+        updateImages treeItem 
+        ifIO (treeCtrlIsSelected tc treeItem) $ updateRight treeItem 
+        ifIO (treeCtrlIsExpanded tc treeItem) $ case path'' of
+          (i:is) -> do cs <- treeCtrlGetChildren tc treeItem 
                        updatePath (cs !! i) is
           [] -> return ()
 
-    bRefresh :: IO ()
-    bRefresh = do
+    bRefresh' :: IO ()
+    bRefresh' = do
       treeCtrlDeleteAllItems tc
 --{      root <- treeCtrlAddRoot tc "current situation" 5 (-1) objectNull
       root <- treeCtrlAddRoot tc "current situation" 12 12 objectNull
@@ -597,32 +596,32 @@ brain mdiparent pr vart varb newg = do
       selectRight root
 
     giveBirth :: TreeItem -> IO ()
-    giveBirth item = do
-      movs <- getData item
-      t <- gametree item
+    giveBirth treeItem = do
+      movs <- getData treeItem 
+      t <- gametree treeItem 
       for 0 (movesnr t - 1) (\i -> do
-        let u = shear i t
+        let -- u = shear i t
             m = showmove pr (player t) (state t) i
---{        jtem <- treeCtrlAppendItem tc item (show i ++ " (" ++ m ++ ")") (player t) (-1) objectNull 
-        jtem <- treeCtrlAppendItem tc item (show i ++ " (" ++ m ++ ")") (-1) (-1) objectNull 
+--{        jtem <- treeCtrlAppendItem tc treeItem (show i ++ " (" ++ m ++ ")") (player t) (-1) objectNull 
+        jtem <- treeCtrlAppendItem tc treeItem (show i ++ " (" ++ m ++ ")") (-1) (-1) objectNull 
         treeCtrlSetItemClientData tc jtem (return ()) (movs ++ [i])
         updateThickness jtem
         )
-      treeCtrlSetItemHasChildren tc item (movesnr t > 0)
+      treeCtrlSetItemHasChildren tc treeItem (movesnr t > 0)
 
     updateThickness :: TreeItem -> IO ()
-    updateThickness item = do
-      t <- gametree item
+    updateThickness treeItem = do
+      t <- gametree treeItem 
       let itemcolor | filled t  = black
                     | otherwise = grey
-      treeCtrlSetItemTextColour tc item itemcolor
-      treeCtrlSetItemBold       tc item (closed t)
+      treeCtrlSetItemTextColour tc treeItem itemcolor
+      treeCtrlSetItemBold       tc treeItem (closed t)
   
     updateImages :: TreeItem -> IO ()
-    updateImages item = do
-      t <- gametree item
-      c <- treeCtrlItemHasChildren tc item
-      cs <- treeCtrlGetChildren tc item
+    updateImages treeItem = do
+      t <- gametree treeItem 
+      c <- treeCtrlItemHasChildren tc treeItem 
+      cs <- treeCtrlGetChildren tc treeItem 
       when (c > 0) $ for 0 (movesnr t - 1) (\i -> do
         let offset | i `elem` best t = 6
                    | otherwise       = 0
@@ -630,18 +629,18 @@ brain mdiparent pr vart varb newg = do
         )
 
     setImage :: TreeItem -> Int -> IO ()
-    setImage item i = do
-      j <- treeCtrlGetItemImage tc item 0 --{ wxTreeItemIcon_Normal
+    setImage treeItem i = do
+      j <- treeCtrlGetItemImage tc treeItem 0 --{ wxTreeItemIcon_Normal
       when (i /= j) $ do
-        treeCtrlSetItemImage tc item i 0 --{ wxTreeItemIcon_Normal
-        treeCtrlSetItemImage tc item i 1 --{ wxTreeItemIcon_Selected
---{        treeCtrlSetItemImage tc item i 2 --{ wxTreeItemIcon_Expanded
---{        treeCtrlSetItemImage tc item i 3 --{ wxTreeItemIcon_SelectedExpanded
+        treeCtrlSetItemImage tc treeItem i 0 --{ wxTreeItemIcon_Normal
+        treeCtrlSetItemImage tc treeItem i 1 --{ wxTreeItemIcon_Selected
+--{        treeCtrlSetItemImage tc treeItem i 2 --{ wxTreeItemIcon_Expanded
+--{        treeCtrlSetItemImage tc treeItem i 3 --{ wxTreeItemIcon_SelectedExpanded
 
 --  gametree :: TreeItem -> IO (Tree g)
-    gametree item = do
+    gametree treeItem = do
       t <- varGet vart
-      movs <- getData item
+      movs <- getData treeItem 
       return $ gametree_ movs t
      where
 --    gametree_ :: [Int] -> Tree g -> Tree g
@@ -652,23 +651,23 @@ brain mdiparent pr vart varb newg = do
     playerinput :: Int -> IO ()
     playerinput i = do
       info $ "brain moverequest: " ++ show i
-      item <- treeCtrlGetSelection tc
-      t <- gametree item
-      cs <- treeCtrlGetChildren tc item
+      treeItem <- treeCtrlGetSelection tc
+      t <- gametree treeItem 
+      cs <- treeCtrlGetChildren tc treeItem 
       when (0 <= i && i < movesnr t) $ do
-        treeCtrlExpand tc item
+        treeCtrlExpand tc treeItem 
         treeCtrlSelectItem tc (cs !! i)
 
   {--== MODIFICATION PHASE ==--}
 
   board pBoard pr varu False playerinput
 
-  bRefresh
+  bRefresh'
 --  setImages True
   setImages False
         
 
-  varSet varb $ Brain bClose bUpdatePath bRefresh
+  varSet varb $ Brain bClose' bUpdatePath' bRefresh'
 
   set mGame  [ text := "&Game"                                                                                                                                     ] 
   set iNew   [ text := "&New Game\tCtrl+N"        , help := "Start a new game"                                 , on command  := newg                               ]
@@ -744,11 +743,12 @@ html :: Window a -> FilePath -> IO ()
 html w f = do
   d <- dialog w [text := "Help"]
   -- w <- htmlWindowCreate d (-1) (rect (point 0 0) (size 640 480)) 0 []
-  w <- htmlWindowCreate d (-1) (rect (point 0 0) (Size 640 480)) 0 []
-  htmlWindowLoadPage w f
-  set d [layout := widget w, visible := True]
+  w' <- htmlWindowCreate d (-1) (rect (point 0 0) (Size 640 480)) 0 []
+  htmlWindowLoadPage w' f
+  set d [layout := widget w', visible := True]
   return ()
 
+about :: String
 about = "GeBoP - General Boardgames Player"
      ++ "\nversion " ++ version
      ++ "\n"
@@ -758,25 +758,25 @@ about = "GeBoP - General Boardgames Player"
      ++ "\nGeBoP was written using wxHaskell"
      
 bitmap :: String -> IO (Bitmap ())
-bitmap name = do bmp    <- bitmapCreateLoad ("images\\" ++ name ++      ".bmp") wxBITMAP_TYPE_ANY
-                 mskbmp <- bitmapCreateLoad ("images\\" ++ name ++ "_mask.bmp") wxBITMAP_TYPE_ANY 
-                 bitmapSetDepth mskbmp 1
-                 msk    <- maskCreate mskbmp
-                 bitmapSetMask bmp msk
-                 return bmp
+bitmap name' = do bmp    <- bitmapCreateLoad ("images\\" ++ name' ++      ".bmp") wxBITMAP_TYPE_ANY
+                  mskbmp <- bitmapCreateLoad ("images\\" ++ name' ++ "_mask.bmp") wxBITMAP_TYPE_ANY 
+                  bitmapSetDepth mskbmp 1
+                  msk    <- maskCreate mskbmp
+                  bitmapSetMask bmp msk
+                  return bmp
 
 bitmapImageList :: ImageList () -> String -> IO ()
-bitmapImageList il name = do
-  bmp    <- bitmapCreateLoad ("images\\" ++ name ++      ".bmp") wxBITMAP_TYPE_ANY
-  mskbmp <- bitmapCreateLoad ("images\\" ++ name ++ "_mask.bmp") wxBITMAP_TYPE_ANY 
+bitmapImageList il name' = do
+  bmp    <- bitmapCreateLoad ("images\\" ++ name' ++      ".bmp") wxBITMAP_TYPE_ANY
+  mskbmp <- bitmapCreateLoad ("images\\" ++ name' ++ "_mask.bmp") wxBITMAP_TYPE_ANY 
   bitmapSetDepth mskbmp 1
   imageListAddBitmap il bmp mskbmp
   return ()
 
 bitmapHighImageList :: ImageList () -> String -> IO ()
-bitmapHighImageList il name = do
-  bmp    <- bitmapCreateLoad ("images\\high_" ++ name ++      ".bmp") wxBITMAP_TYPE_ANY
-  mskbmp <- bitmapCreateLoad ("images\\"      ++ name ++ "_mask.bmp") wxBITMAP_TYPE_ANY 
+bitmapHighImageList il name' = do
+  bmp    <- bitmapCreateLoad ("images\\high_" ++ name' ++      ".bmp") wxBITMAP_TYPE_ANY
+  mskbmp <- bitmapCreateLoad ("images\\"      ++ name' ++ "_mask.bmp") wxBITMAP_TYPE_ANY 
   bitmapSetDepth mskbmp 1
   imageListAddBitmap il bmp mskbmp
   return ()

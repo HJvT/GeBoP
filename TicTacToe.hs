@@ -6,8 +6,8 @@
 module TicTacToe (TicTacToe, tictactoe) where
 
 import Game
-import Graphics.UI.WX hiding (border)
-import Graphics.UI.WXCore
+import Graphics.UI.WX     hiding (border, point)
+import Graphics.UI.WXCore hiding (point)
 import Tools
 
 data TicTacToe = TicTacToe [Maybe Player] deriving (Eq, Show)
@@ -32,20 +32,20 @@ rules _ =    "Tictactoe"
 
   possible _ = PropertyRange { playersrange = [2], boardsizerange = [3] }
   
-  new p = TicTacToe $ replicate 9 Nothing
+  new _p = TicTacToe $ replicate 9 Nothing
   
   moves _ _ (TicTacToe s)
     | any (\p -> any (tttwinning p s) tttrows) [0, 1] = []
     | otherwise                                       = map (move . snd) $ possiblemoves s
 
-  showmove pr p (TicTacToe s) i = let j = snd (possiblemoves s !! i)
-                                  in ["abc" !! (j `mod` 3), "321" !! (j `div` 3)]
+  showmove _pr _p (TicTacToe s) i = let j = snd (possiblemoves s !! i)
+                                    in ["abc" !! (j `mod` 3), "321" !! (j `div` 3)]
 
   value _ _ (TicTacToe s) | any (tttwinning 0 s) tttrows = [ 1, -1]
                           | any (tttwinning 1 s) tttrows = [-1,  1]
                           | otherwise                    = [ 0,  0]
 
-  board p pr vart ia move = do
+  board p _pr vart _ia move' = do
 
     marble <- bitmapCreateLoad "images\\marble.bmp" wxBITMAP_TYPE_ANY
     varg <- varCreate $ grate rectZero 0 (0, 0) sizeZero
@@ -71,19 +71,20 @@ rules _ =    "Tictactoe"
           case st !! (i + 3 * j) of Just 0  -> drawCross  dc $ field g (i, j)
                                     Just 1  -> drawCircle dc $ field g (i, j)
                                     Nothing -> return ()
+                                    _       -> error "Unexpected value"
           ))
          
       onclick :: Point -> IO ()
-      onclick pt = do 
+      onclick point = do 
         t <- varGet vart
         g <- varGet varg
         let TicTacToe st = state t
-            (i, j)       = locate g pt
+            (i, j)       = locate g point 
             n | i < 0 || i >= 3 || j < 0 || j >= 3 = -1
               | otherwise = (i + 3 * j)
         case lookup n (zip (map snd $ possiblemoves st) [0..]) of
           Nothing -> return ()
-          Just n  -> move n
+          Just n'  -> move' n'
 
     set p [ on click := onclick
           , on paint := onpaint

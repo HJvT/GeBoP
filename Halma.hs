@@ -8,8 +8,8 @@ module Halma (Halma, halma) where
 import Game
 import Array
 -- import Graphics.UI.WX
-import Graphics.UI.WX     hiding (border)
-import Graphics.UI.WXCore
+import Graphics.UI.WX     hiding (border, empty, point)
+import Graphics.UI.WXCore hiding (empty, point)
 import Tools
 
 data Halma = Halma (Array (Int, Int) (Maybe Player)) deriving (Eq, Show)
@@ -40,18 +40,20 @@ instance Game Halma where
     where
       totaldists :: [Int]
       totaldists = map totaldist [0 .. players pr - 1]
-      totaldist :: Player -> Int
-      totaldist p = let mypieces = map (\(i, e) -> i) $ filter (\(i, e) -> e == Just p) $ assocs st
-                    in sum $ map (dist pr p) mypieces
-      myvalue :: Player -> Float
-      myvalue p = let d = sum (map totaldist [0 .. players pr - 1]) - (players pr) * totaldist p
-                  in (fromInteger . toInteger) d  / (fromInteger . toInteger) (120 * (players pr))
 
-  board p pr vart ia move = do
+      totaldist :: Player -> Int
+      totaldist p' = let mypieces = map (\(i, _e) -> i) $ filter (\(_i, e) -> e == Just p') $ assocs st
+                     in sum $ map (dist pr p') mypieces
+
+      myvalue :: Player -> Float
+      myvalue p' = let d = sum (map totaldist [0 .. players pr - 1]) - (players pr) * totaldist p'
+                   in (fromInteger . toInteger) d  / (fromInteger . toInteger) (120 * (players pr))
+
+  board p pr vart _ia move' = do
 
     marble <- bitmapCreateLoad "images\\marble.bmp" wxBITMAP_TYPE_ANY
-    varg <- varCreate $ grate rectZero 0 (0, 0) sizeZero
-    vare <- varCreate (Nothing :: Maybe (Int, Int))
+    varg   <- varCreate $ grate rectZero 0 (0, 0) sizeZero
+    vare   <- varCreate (Nothing :: Maybe (Int, Int))
 
     let 
     
@@ -69,18 +71,18 @@ instance Game Halma where
             lin' (Rect x1 y1 w1 h1) (Rect x2 y2 w2 h2) = do
               line dc (pt (x1 + w1) (y1 + h1 `div` 2)) (pt (x2 + w2) (y2 + h2 `div` 2)) []
             lin :: (Int, Int) -> (Int, Int) -> IO ()
-            lin p q = lin' (field g $ tograte p) (field g $ tograte q)
+            lin p' q = lin' (field g $ tograte p') (field g $ tograte q)
         varSet varg g
         tileBitmap dc r marble
 --{        drawGrate dc g [penColor := yellow]
         for 0 16 (\j -> do
-          let i = head $ dropWhile (\i -> inside $ fromgrate (i, j)) [13 ..]
+          let i = head $ dropWhile (\i' -> inside $ fromgrate (i', j)) [13 ..]
           drawTextRect dc (show $ 17 - j) $ field g ( i - 1, j) |#| field g (     i, j)
           drawTextRect dc (show $ 17 - j) $ field g (25 - i, j) |#| field g (26 - i, j)
-          let d = (i  - 1 + 3 * j) `div` 2 - 18
-              e = (25 - i + 3 * j) `div` 2 - 18
+          let d  = (i  - 1 + 3 * j) `div` 2 - 18
+              e' = (25 - i + 3 * j) `div` 2 - 18
           drawTextRect dc [['A' ..] !! (16 - j)] $ field g (i  - 1 - d, j - d) |#| field g (i  - 1 - d, j - 1 - d)
-          drawTextRect dc [['A' ..] !! (16 - j)] $ field g (25 - i - e, j - e) |#| field g (25 - i - e, j - 1 - e)
+          drawTextRect dc [['A' ..] !! (16 - j)] $ field g (25 - i - e', j - e') |#| field g (25 - i - e', j - 1 - e')
           )
         for 0 4 (\n -> do
           lin (  - 4,  n - 8) (n - 4,  n - 8)
@@ -100,22 +102,22 @@ instance Game Halma where
           when (even (i + j)) $ when (inside $ fromgrate (i, j)) $
             drawPiece dc (field g (i, j)) radius (st ! fromgrate (i, j))
                    ) )
-        case e of Just p  -> drawBrightPiece dc (field g $ tograte p) radius
+        case e of Just p' -> drawBrightPiece dc (field g $ tograte p') radius
                   Nothing -> return ()
          
       onclick :: Point -> IO ()
-      onclick pt = do 
+      onclick point = do 
         t <- varGet vart
         e <- varGet vare
         g <- varGet varg
         let Halma st = state t
-            n = fromgrate $ locate g pt
+            n = fromgrate $ locate g point 
         case (e, inside n) of
           (Nothing, True ) -> when (st ! n == Just (player t)) $ varSet vare (Just n) >> repaint p
           (_      , False) -> varSet vare Nothing >> repaint p
           (Just te, True ) -> case lookup (te, n) $ zip (allMoves pr (player t) st) [0..] of
             Nothing -> varSet vare Nothing >> repaint p
-            Just  i -> varSet vare Nothing >> repaint p >> move i
+            Just  i -> varSet vare Nothing >> repaint p >> move' i
 
     set p [ on click    := onclick
           , on unclick  := onclick
@@ -131,12 +133,12 @@ fit dc t m = do
   fit_ dc (s + 6)
  where
   fit_ :: DC () -> Int -> IO Int
-  fit_ dc 1 = border dc t
-  fit_ dc s = do
-    set dc [fontSize := s - 1]
+  fit_ _dc 1 = border dc t
+  fit_ dc' s = do
+    set dc' [fontSize := s - 1]
     b <- border dc t
     if b <= m then return b
-              else fit_ dc (s - 1)
+              else fit_ dc' (s - 1)
 
 drawPiece :: DC () -> Rect -> Int -> Maybe Player -> IO ()
 drawPiece dc (Rect x y w h) r mp = circle dc (pt (x + w) (y + h `div` 2)) r [brushColor := col mp]
@@ -159,8 +161,8 @@ col p = case p of
   Just 0  -> blue
   Just 1  -> red
   Just 2  -> green
-  Just 3  -> rgb 160 0 192
-  Just 4  -> rgb 192 128 0
+  Just 3  -> rgb 160 0   (192 :: Int)
+  Just 4  -> rgb 192 128 (0 :: Int)
   Just 5  -> grey
   _       -> black
 
@@ -172,12 +174,15 @@ allMoves pr p st | p == 0 && 20 `elem` (map totaldist [0 .. players pr - 1]) = [
                  | otherwise = stepmoves ++ jumpmoves
   where
     mypieces :: Player -> [(Int, Int)]
-    mypieces p = map (\(i, e) -> i) $ filter (\(i, e) -> e == Just p) $ assocs st
+    mypieces p' = map (\(i, _e) -> i) $ filter (\(_i, e) -> e == Just p') $ assocs st
+
     stepmoves :: [HalmaMove]
     stepmoves = let potmoves = concatMap (\t -> map (\s -> (t, t +- s)) $ steps pr p) (mypieces p)
-                in filter (\(f, t) -> inside t && st ! t == Nothing) potmoves
+                in filter (\(_f, t) -> inside t && st ! t == Nothing) potmoves
+
     jumpmoves :: [HalmaMove]
     jumpmoves =  concatMap (\t -> map (\s -> (t, s)) $ floodfill t []) (mypieces p)
+
     floodfill :: (Int, Int) -> [(Int, Int)] -> [(Int, Int)]
     floodfill t fs = let news = map (\j -> t +- j +- j)
                               $ filter (\j -> let u = t +- j +- j
@@ -189,7 +194,7 @@ allMoves pr p st | p == 0 && 20 `elem` (map totaldist [0 .. players pr - 1]) = [
                               $ halfjumps
                      in foldr ($) fs $ map (\u -> floodfill u . (u :)) news
     totaldist :: Player -> Int
-    totaldist p = sum $ map (dist pr p) $ mypieces p
+    totaldist p' = sum $ map (dist pr p') $ mypieces p'
 
 steps :: Properties -> Player -> [(Int, Int)]
 steps pr p = steppos (pos pr p)
@@ -200,9 +205,12 @@ steps pr p = steppos (pos pr p)
     steppos 3 = [(-1, -1), (-1,  0), ( 0,  1), ( 1,  1)]
     steppos 4 = [( 0, -1), (-1, -1), (-1,  0), ( 0,  1)]
     steppos 5 = [( 1,  0), ( 0, -1), (-1, -1), (-1,  0)]
+    steppos _ = error "steps: Unexpected value"
 
+{-
 jumps :: [(Int, Int)]
 jumps = map (\(x, y) -> (2 * x, 2 * y)) halfjumps
+-}
 
 halfjumps :: [(Int, Int)]
 halfjumps = [(1, 1), (1, 0), (0, -1), (-1, -1), (-1, 0), (0, 1)]
@@ -216,30 +224,34 @@ dist pr p t = distpos (pos pr p) t
     distpos 3 (x, y) = 8 + x - y + max 0 (-4 - x    ) + max 0 (-4 + y    )
     distpos 4 (x, y) = 8 + x     + max 0 (-4 - x + y) + max 0 (-4 - y    )
     distpos 5 (x, y) = 8     + y + max 0 (-4 - x    ) + max 0 (-4 - y + x)
+    distpos _ _      = error "dist: Unexpected value"
 
 move :: Properties -> HalmaMove -> (Player, Halma) -> (Player, Halma)
 move pr (f, t) (p, Halma s) = ( (p + 1) `mod` players pr
                               , Halma $ s // [(f, Nothing), (t, Just p)]
                               )
 
+startpos :: (Num t, Num t1, Enum t1) => t -> [(t1, t1)]
 startpos 0 = [(x, y) | x <- [-4 .. -1], y <- [x + 5 ..     4]]
 startpos 1 = [(x, y) | x <- [-8 .. -5], y <- [  - 4 .. x + 4]]
 startpos 2 = [(x, y) | x <- [-4 .. -1], y <- [x - 4 ..   - 5]]
 startpos 3 = [(x, y) | x <- [ 1 ..  4], y <- [  - 4 .. x - 5]]
 startpos 4 = [(x, y) | x <- [ 5 ..  8], y <- [x - 4 ..     4]]
 startpos 5 = [(x, y) | x <- [ 1 ..  4], y <- [    5 .. x + 4]]
+startpos _ = error "startpos: Unexpected value"
 
 pos :: Properties -> Player -> Int
 pos pr p | players pr == 2 = [0, 3      ] !! p
          | players pr == 3 = [0, 2, 4   ] !! p
          | players pr == 4 = [0, 1, 3, 4] !! p
          | players pr == 6 = p
+         | otherwise       = error "pos: Unexpected value"
 
 inside :: (Int, Int) -> Bool
 inside (x, y) = (x >= -4 && y <= 4 && x <= y + 4)
              || (y >= -4 && x <= 4 && y <= x + 4)
 
-{- the halmaboard internally look like this:
+{- the halmaboard internally looks like this:
 
 y/j
 

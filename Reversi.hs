@@ -50,8 +50,9 @@ instance Game Reversi where
       count (Nothing : fs) =      count fs
       count (Just 0  : fs) =  1 + count fs
       count (Just 1  : fs) = -1 + count fs
+      count _              = error "value: Unexpected value"
 
-  board p pr vart ia move = do
+  board p pr vart ia move' = do
 
     marble <- bitmapCreateLoad "images\\marble.bmp" wxBITMAP_TYPE_ANY
     varg <- varCreate $ grate rectZero 0 (0, 0) sizeZero
@@ -75,24 +76,24 @@ instance Game Reversi where
           )
         drawGrate dc g [brushKind := BrushTransparent]
         for 0 (bsz - 1) (\i -> for 0 (bsz - 1) (\j ->
-          case st ! (i, j) of Just p  -> drawPiece p dc $ field g (i, j)
+          case st ! (i, j) of Just p' -> drawPiece p' dc $ field g (i, j)
                               Nothing -> return ()
           ))
         if human pr !! player t && allMoves (boardsize pr) (player t) st == [Nothing]
           then wait p 1 $ do
             when ia $ infoDialog p "You can't move!" "You have to skip this turn, since there are no possible moves."
-            move 0
+            move' 0
           else return ()
 
       onclick :: Point -> IO ()
-      onclick pt = do 
+      onclick point' = do 
         t <- varGet vart
         g <- varGet varg
         let Reversi st = state t
-            n          = Just $ locate g pt
+            n          = Just $ locate g point' 	
         case lookup n $ zip (allMoves (boardsize pr) (player t) st) [0..] of
           Nothing -> return ()
-          Just  i -> move i
+          Just  i -> move' i
 
     set p [ on click    := onclick
           , on paint    := onpaint
@@ -101,8 +102,8 @@ instance Game Reversi where
 
 drawPiece :: Player -> DC () -> Rect -> IO ()
 drawPiece p dc (Rect x y w h) = do
-  case p of 0 -> set dc [brushColor := rgb 96 16 255 ]
-            1 -> set dc [brushColor := rgb 192 64 16 ]
+  case p of 0 -> set dc [brushColor := rgb 96  16 (255 :: Int) ]
+            1 -> set dc [brushColor := rgb 192 64 (16 :: Int)  ]
             _ -> set dc [brushColor := white]
   circle dc (pt (x + w `div` 2) (y + h `div` 2)) (2 * (min w h) `div` 5) []
 
@@ -110,26 +111,26 @@ drawPiece p dc (Rect x y w h) = do
 (a, b) +- (c, d) = (a + c, b + d)
 
 allMoves :: Int -> Player -> Array (Int, Int) (Maybe Player) -> [Maybe (Int, Int)]
-allMoves bsz p s 
+allMoves _bsz p s 
   | (null $ valid p s) && (not $ null $ valid (1 - p) s) = [Nothing]
   | otherwise                                              = map Just $ valid p s
   where
     valid :: Player -> Array (Int, Int) (Maybe Player) -> [(Int, Int)]
-    valid p s = filter (\xy -> or $ map (scan xy) dirs) . filter ((== Nothing) . (s !)) $ indices s 
+    valid p' s' = filter (\xy -> or $ map (scan xy) dirs) . filter ((== Nothing) . (s' !)) $ indices s' 
       where
         dirs :: [(Int, Int)]
         dirs = [(x, y) | x <- [-1 .. 1], y <- [-1 .. 1]]
         scan  :: (Int, Int) -> (Int, Int) -> Bool
-        scan  xy dxy =  check (xy +- dxy) (Just $ 1 - p) && scan1 (xy +- dxy) dxy
+        scan  xy dxy =  check (xy +- dxy) (Just $ 1 - p') && scan1 (xy +- dxy) dxy
         scan1 :: (Int, Int) -> (Int, Int) -> Bool
-        scan1 xy dxy =  check (xy +- dxy) (Just       p)
-                    || (check (xy +- dxy) (Just $ 1 - p) && scan1 (xy +- dxy) dxy)
+        scan1 xy dxy =  check (xy +- dxy) (Just       p')
+                    || (check (xy +- dxy) (Just $ 1 - p') && scan1 (xy +- dxy) dxy)
         check :: (Int, Int) -> Maybe Player -> Bool
-        check m f | not $ inRange (bounds s) m = False
-                  | otherwise                  = s ! m == f
+        check m f | not $ inRange (bounds s') m = False
+                  | otherwise                   = s' ! m == f
 
 move :: Int -> Maybe (Int, Int) -> (Player, Reversi) -> (Player, Reversi)
-move bsz (Just m) (p, Reversi s) = (1 - p, Reversi $ s // ((m, Just p) : concatMap (scan m) dirs))
+move _bsz (Just m) (p, Reversi s) = (1 - p, Reversi $ s // ((m, Just p) : concatMap (scan m) dirs))
   where
     dirs :: [(Int, Int)]
     dirs = [(x, y) | x <- [-1 .. 1], y <- [-1 .. 1]]
@@ -141,6 +142,6 @@ move bsz (Just m) (p, Reversi s) = (1 - p, Reversi $ s // ((m, Just p) : concatM
                     | check (xy +- dxy) (Just $ 1 - p) = scan1 (xy +- dxy) dxy $ (xy +- dxy, Just p) : cs
                     | otherwise                          = []
     check :: (Int, Int) -> Maybe Player -> Bool
-    check m f | not $ inRange (bounds s) m = False
-              | otherwise                  = s ! m == f
+    check m' f | not $ inRange (bounds s) m' = False
+               | otherwise                  = s ! m' == f
 move _ Nothing (p, rs) = (1 - p, rs)

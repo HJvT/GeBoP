@@ -11,8 +11,8 @@ module Zenix (Zenix, zenix) where
 
 import Game
 import Array
-import Graphics.UI.WX     hiding (border)
-import Graphics.UI.WXCore
+import Graphics.UI.WX     hiding (border, point)
+import Graphics.UI.WXCore hiding (point)
 import Tools
 
 data Zenix = Zenix (Array (Int, Int) (Maybe Player)) deriving (Eq, Show)
@@ -38,27 +38,30 @@ instance Game Zenix where
                             of (x, y) -> ['a' ..] !! x : show (1 + y)
 
   value pr p (Zenix st) 
-    | null $ allMoves pr p st = let winners = map fst $ filter (\(i, c) -> c == maximum chains) $ zip [0 ..] chains
+    | null $ allMoves pr p st = let winners = map fst $ filter (\(_i, c) -> c == maximum chains) $ zip [0 ..] chains
                                 in  foldr ($) (replicate (players pr) (-1)) $ map (|> 1) winners
     | otherwise               = map myvalue [0 .. players pr - 1]
    where
     bsz = boardsize pr
+
     chains :: [Int]
-    chains = map (\p -> scan p bsz []) [0 .. players pr - 1]
+    chains = map (\p' -> scan p' bsz []) [0 .. players pr - 1]
+
     myvalue :: Player -> Float
-    myvalue p = let t = fromInteger . toInteger $ (players pr) * (chains !! p) - sum chains
-                    n = fromInteger . toInteger $ 2 * bsz
+    myvalue p' = let t = fromInteger . toInteger $ (players pr) * (chains !! p') - sum chains
+                     n = fromInteger . toInteger $ 2 * bsz
                 in t / n
+
     scan :: Player -> Int -> [Int] -> Int
-    scan p y _ | y >= bsz = scan p (bsz - 1) [0 .. bsz]
-    scan p y [] = bsz - y
-    scan p y xs = scan p (y - 1) $ filter good [0 .. y]
+    scan p' y _ | y >= bsz = scan p' (bsz - 1) [0 .. bsz]
+    scan _p y [] = bsz - y
+    scan p' y xs = scan p' (y - 1) $ filter good [0 .. y]
      where
       good :: Int -> Bool
-      good x = st ! (x, y) == Just p
+      good x = st ! (x, y) == Just p'
             && (x `elem` xs || (x + 1) `elem` xs)
 
-  board p pr vart ia move = do
+  board p pr vart _ia move' = do
 
     marble <- bitmapCreateLoad "images\\marble.bmp" wxBITMAP_TYPE_ANY
     varg <- varCreate $ grate rectZero 0 (0, 0) sizeZero
@@ -73,11 +76,13 @@ instance Game Zenix where
         b <- border dc (bsz, bsz)
         let g = grate r b (2 * bsz, bsz) (Size 4 7)
             radius = rectWidth (field g (0, 0))
+{-
             lin' :: Rect -> Rect -> Color -> IO ()
             lin' (Rect x1 y1 w1 h1) (Rect x2 y2 w2 h2) c = do
               line dc (pt (x1 + w1 `div` 2) (y1 + h1)) (pt (x2 + w2 `div` 2) (y2 + h2)) [penWidth := 4, penColor := c]
             lin :: (Int, Int) -> (Int, Int) -> Color -> IO ()
             lin p q = lin' (field g $ tograte bsz p) (field g $ tograte bsz q)
+-}
         varSet varg g
         tileBitmap dc r marble
 --{        drawGrate dc g [penColor := yellow]
@@ -90,15 +95,15 @@ instance Game Zenix where
           ))
 
       onclick :: Point -> IO ()
-      onclick pt = do 
+      onclick point = do 
         t <- varGet vart
         g <- varGet varg
         let Zenix st = state t
             bsz = boardsize pr
-            n = fromgrate bsz $ locate g pt
+            n = fromgrate bsz $ locate g point 
         case lookup n $ zip (allMoves pr (player t) st) [0..] of
             Nothing -> return ()
-            Just  i -> move i
+            Just  i -> move' i
 
     set p [ on click    := onclick
           , on paint    := onpaint
@@ -108,17 +113,20 @@ instance Game Zenix where
     return ()
 
 drawPiece :: DC () -> Rect -> Int -> Maybe Player -> IO ()
-drawPiece dc (Rect x y w h) r mp = do
+drawPiece dc (Rect x y _w h) r mp = do
   case mp of Just 0  -> circle dc (pt x (y + h `div` 2)) r [brushKind := BrushSolid, brushColor := blue ]
              Just 1  -> circle dc (pt x (y + h `div` 2)) r [brushKind := BrushSolid, brushColor := red  ]
              Just 2  -> circle dc (pt x (y + h `div` 2)) r [brushKind := BrushSolid, brushColor := green]
              Nothing -> circle dc (pt x (y + h `div` 2)) r [brushKind := BrushTransparent]
+             _       -> error "drawPiece: Unexpected value"
 
+{-
 (+-) :: Num a => (a, a) -> (a, a) -> (a, a)
 (a, b) +- (c, d) = (a + c, b + d)
+-}
 
 allMoves :: Properties -> Player -> Array (Int, Int) (Maybe Player) -> [ZenixMove]
-allMoves pr p st 
+allMoves pr _p st 
   | otherwise = filter free $ indices st
  where
   bsz = boardsize pr

@@ -21,7 +21,7 @@ import Inf
 -- list functions --
 
 maximumWith, minimumWith :: (a -> a -> Ordering) -> [a] -> [a]
-maximumWith p []       = []
+maximumWith _ []       = []
 maximumWith p (x : xs) = case maximumWith p xs
                          of []       -> [x]
                             (y : ys) -> case p x y
@@ -31,7 +31,7 @@ maximumWith p (x : xs) = case maximumWith p xs
 minimumWith = maximumWith . flip
 
 (|>) :: Int -> a -> [a] -> [a]
-(|>) 0 y (x : xs) = y : xs
+(|>) 0 y (_ : xs) = y : xs
 (|>) n y (x : xs) = x : (|>) (n - 1) y xs
 (|>) _ _ _        = error "(|>): index out of bounds"
 
@@ -95,16 +95,26 @@ numberword 30 = "thirty"
 numberword 40 = "forty"
 numberword 50 = "fifty"
 numberword 80 = "eighty"
+{-
 numberword x |           x < 10 ^  2 = largenumber 1 "ty"        "-" x
              |           x < 10 ^  3 = largenumber 2 " hundred"  " " x
              |           x < 10 ^  6 = largenumber 3 " thousand" " " x
              |           x < 10 ^  9 = largenumber 6 " million"  " " x
              | toInteger x < 10 ^ 12 = largenumber 9 " billion"  " " x
+-}
+numberword x | smallerExp10 x 2  = largenumber 1 "ty"        "-" x
+             | smallerExp10 x 3  = largenumber 2 " hundred"  " " x
+             | smallerExp10 x 6  = largenumber 3 " thousand" " " x
+             | smallerExp10 x 9  = largenumber 6 " million"  " " x
+             | smallerExp10 x 12 = largenumber 9 " billion"  " " x
   where
+    smallerExp10 :: Int -> Int -> Bool
+    smallerExp10 y z = y < 10 ^ z
+
     largenumber :: Int -> String -> String -> Int -> String
-    largenumber q s t x
-      | x `mod` (10 ^ q) == 0 = numberword (x `div` (10 ^ q)) ++ s
-      | otherwise = numberword (x - x `mod` (10 ^ q)) ++ t ++ numberword (x `mod` (10 ^ q))
+    largenumber q s t y
+      | y `mod` (10 ^ q) == 0 = numberword (y `div` (10 ^ q)) ++ s
+      | otherwise = numberword (y - y `mod` (10 ^ q)) ++ t ++ numberword (y `mod` (10 ^ q))
 numberword _ = "unknown number"
 
 sqr :: Int -> Int
@@ -140,7 +150,7 @@ cut (l, u) x
 
 
 tileBitmap :: DC () -> Rect -> Bitmap () -> IO ()
-tileBitmap dc (Rect x y w h) bmp = do
+tileBitmap dc (Rect _x _y w h) bmp = do
   bw <- bitmapGetWidth  bmp
   bh <- bitmapGetHeight bmp
   for 0 (w `div` bw) (\i ->
@@ -156,20 +166,20 @@ grate (Rect x y w h) b (m, n) (Size u v) =
   grate_ (Rect (x + b) (y + b) (w - 2 * b) (h - 2 * b))
   where
     grate_ :: Rect -> Grate
-    grate_ (Rect x y w h) =
-      let t = min (w * n * v) (h * m * u)
+    grate_ (Rect x' y' w' h') =
+      let t = min (w' * n * v) (h' * m * u)
           w_ = t `div` (n * v)
           h_ = t `div` (m * u)
-          x_ = (x + (w - w_) `div` 2)
-          y_ = (y + (h - h_) `div` 2) 
+          x_ = (x' + (w' - w_) `div` 2)
+          y_ = (y' + (h' - h_) `div` 2) 
       in Grate (Rect x_ y_ w_ h_) (m, n) b
 
 
 field :: Grate -> (Int, Int) -> Rect
 field (Grate (Rect x y w h) (m, n) _) (i, j) =
   let fx, fy :: Int -> Int
-      fx i = x + i * w `div` m
-      fy j = y + j * h `div` n
+      fx i' = x + i' * w `div` m
+      fy j' = y + j' * h `div` n
   in Rect (fx i) (fy j) (fx (i + 1) - fx i) (fy (j + 1) - fy j)
 
 locate :: Grate -> Point -> (Int, Int)

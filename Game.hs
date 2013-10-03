@@ -123,7 +123,7 @@ grow t | movesnr t == 0 = t {closed = True, filled = True, mind = inf, maxd = 1,
 -- update recomputes val, best, mind and maxd given the index of the altered child
 --{ update moet efficienter dan altijd computeVal!
 update :: Game g => Int -> Tree g -> Tree g
-update i t = computeVal
+update _i t = computeVal
            $ t { closed = and $ map closed $ elems $ children t
                , mind   = case filter (not . closed) $ elems $ children t
                           of []   -> inf
@@ -137,6 +137,7 @@ path :: Game g => (Tree g -> [Int]) -> [Int] -> Tree g -> [Int]
 path f (j:js) t = case f t of [] -> []
                               is -> let i = is !! (j `mod` length is)
                                     in i : path f js (children t ! i)
+path _ []     _ = error "path: empty list"
 
 -- step makes the tree grow at exactly one leaf, given a path
 step :: Game g => [Int] -> Tree g -> Tree g
@@ -152,7 +153,7 @@ followcombination t = followshortest t ++ followbest t
 followshortest :: Game g => Tree g -> [Int]
 followshortest t | not $ filled t = []
                  | closed t       = []
-                 | otherwise      = let open = filter (\(i, k) -> not $ closed k) $ assocs $ children t
+                 | otherwise      = let open = filter (\(_i, k) -> not $ closed k) $ assocs $ children t
                                         minds = map (\(i, k) -> (i, mind k)) open
                                     in map fst $ minimumWith (\(_, p) (_, q) -> compare p q) minds
 

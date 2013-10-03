@@ -7,8 +7,8 @@ module Bamp (Bamp, bamp) where
 
 import Game
 import Array
-import Graphics.UI.WX     hiding (border)
-import Graphics.UI.WXCore
+import Graphics.UI.WX     hiding (border, point)
+import Graphics.UI.WXCore hiding (point)
 import Tools
 
 data BampField
@@ -22,9 +22,11 @@ isPortal :: BampField -> Bool
 isPortal (Portal _) = True
 isPortal _          = False
 
+{-
 isPiece :: BampField -> Bool
 isPiece (Piece _) = True
 isPiece _         = False
+-}
 
 data Bamp = Bamp (Array (Int, Int) BampField) deriving (Eq, Show)
 
@@ -74,7 +76,7 @@ instance Game Bamp where
 }-}
     | otherwise = [0, 0, 0, 0]
 
-  board p pr vart ia move = do
+  board p pr vart _ia move' = do
 
     marble <- bitmapCreateLoad "images\\marble.bmp" wxBITMAP_TYPE_ANY
     varg <- varCreate $ grate rectZero 0 (0, 0) sizeZero
@@ -105,14 +107,14 @@ instance Game Bamp where
           ))
 
       onclick :: Point -> IO ()
-      onclick pt = do 
+      onclick point = do 
         t <- varGet vart
         g <- varGet varg
         let Bamp st = state t
-            n       = locate g pt
+            n       = locate g point 
         case lookup n $ zip (allMoves (boardsize pr) (player t) st) [0..] of
           Nothing -> return ()
-          Just  i -> move i
+          Just  i -> move' i
 
     set p [ on click    := onclick
           , on paint    := onpaint
@@ -125,44 +127,49 @@ owner bsz (i, j)
   | 2 * i <  bsz && 2 * j >= bsz = 1
   | 2 * i >= bsz && 2 * j >= bsz = 2
   | 2 * i >= bsz && 2 * j <  bsz = 3
+  | otherwise                    = error "owner: Unexpected value"
 
 drawField :: DC () -> Rect -> BampField -> IO ()
-drawField dc (Rect x y w h) Empty      = return ()
+drawField _  (Rect _ _ _ _) Empty      = return ()
 drawField dc (Rect x y w h) (Portal p) = circle dc (pt (x + w `div` 2) (y + h `div` 2)) (2 * (min w h) `div` 5) [penColor := colorplayer p, penWidth := 2, brushKind := BrushTransparent]
 drawField dc (Rect x y w h) (Piece  p) = drawRect dc (Rect (x + w `div` 10) (y + h `div` 10) (w - w `div` 5) (h - h `div` 5)) [brushColor := colorplayer p]
-drawField dc (Rect x y w h) Ball       = circle dc (pt (x + w `div` 2) (y + h `div` 2)) (2 * (min w h) `div` 5) [brushColor := rgb 100 80 40]
+drawField dc (Rect x y w h) Ball       = circle dc (pt (x + w `div` 2) (y + h `div` 2)) (2 * (min w h) `div` 5) [brushColor := rgb 100 80 (40 :: Int)]
 
 allMoves :: Int -> Player -> Array (Int, Int) BampField -> [(Int, Int)]
-allMoves bsz p s = filter valid $ filter (\i -> s ! i == Piece p) $ indices s
+allMoves _bsz p s = filter valid $ filter (\i -> s ! i == Piece p) $ indices s
  where
   (a, b) = findBall s
+
   valid :: (Int, Int) -> Bool
   valid (x, y) | x /= a && y /= b = False
                | x < a = all (\i -> ok (i, y)) [x + 1 .. a + 1]
                | x > a = all (\i -> ok (i, y)) [a - 1 .. x - 1]
                | y < b = all (\j -> ok (x, j)) [y + 1 .. b + 1]
                | y > b = all (\j -> ok (x, j)) [b - 1 .. y - 1]
+               | otherwise = error "allMoves: Unexpected value"
+
   ok :: (Int, Int) -> Bool
   ok t = inRange (bounds s) t
-      && case s ! t of Piece _ -> False
-                       _       -> True
+         && case s ! t of Piece _ -> False
+                          _       -> True
 
 move :: Int -> (Int, Int) -> (Player, Bamp) -> (Player, Bamp)
 move bsz (x, y) (p, Bamp s) = let (a, b) = findBall s
-                                  new = follow (a, b) (signum (a - x), signum (b - y))
-                              in (owner bsz new, Bamp $ s // [((x, y), Empty), ((a, b), Piece p), (new, Ball)])
+                                  new'   = follow (a, b) (signum (a - x), signum (b - y))
+                              in (owner bsz new', Bamp $ s // [((x, y), Empty), ((a, b), Piece p), (new', Ball)])
  where
   follow :: (Int, Int) -> (Int, Int) -> (Int, Int)
-  follow (x, y) (dx, dy)
-    | not $ inRange (bounds s) (x + dx, y + dy) = (x, y)
-    | s ! (x + dx, y + dy) == Empty             = follow (x + dx, y + dy) (dx, dy)
-    | isPortal $ s ! (x + dx, y + dy)           = follow (x + dx, y + dy) (dx, dy)
-    | otherwise                                 = (x, y)
+  follow (x', y') (dx, dy)
+    | not $ inRange (bounds s) (x' + dx, y' + dy) = (x', y')
+    | s ! (x' + dx, y' + dy) == Empty             = follow (x' + dx, y' + dy) (dx, dy)
+    | isPortal $ s ! (x' + dx, y' + dy)           = follow (x' + dx, y' + dy) (dx, dy)
+    | otherwise                                   = (x', y')
 
 findBall :: Array (Int, Int) BampField -> (Int, Int)
 findBall s = case dropWhile (not.(== Ball).snd) $ assocs s
              of ((i, Ball):_) -> i
                 []            -> (0, 0)
+                _             -> error "findBall: Unexpected value"
 
 colorplayer :: Int -> Color
 colorplayer 0 = hsl 0.66 1   0.5

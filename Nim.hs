@@ -34,9 +34,9 @@ instance Game Nim where
     | otherwise = replicate (players pr) 0
     where 
       prev :: Player -> Player
-      prev p = (p - 1) `mod` players pr
+      prev p' = (p' - 1) `mod` players pr
 
-  board p pr vart _ move = do
+  board p _pr vart _ move' = do
 
     st <- staticText p [ text := "There are currently quite a number of rods.\n" ]
     b1 <- button p []
@@ -45,15 +45,15 @@ instance Game Nim where
 
     let 
 
-      onpaint dc r = do
+      onpaint _dc _r = do
         t <- varGet vart
         let Nim n = state t
         set st [ text := "There are currently " ++ numberword n ++ " rods.\n"
                       ++ "How many will you take away?" ]
 
-    set b1 [ text := "one rod"   , on command := move 0 ]
-    set b2 [ text := "two rods"  , on command := move 1 ]
-    set b3 [ text := "three rods", on command := move 2 ]
+    set b1 [ text := "one rod"   , on command := move' 0 ]
+    set b2 [ text := "two rods"  , on command := move' 1 ]
+    set b3 [ text := "three rods", on command := move' 2 ]
 
     set p [ layout   := floatCentre $ column 4 [ centre $ widget st
                                                , row 4 [widget b1, widget b2, widget b3] 
@@ -63,6 +63,7 @@ instance Game Nim where
           
     return ()
 
+{-
 dist :: Int -> Int -> Int
 dist x y = let i = x * x + y * y
                f = fromInteger $ toInteger i
@@ -74,6 +75,7 @@ drawButton n dc (Rect x y w h) =
   do circle dc (pt (x + w `div` 2) (y + h `div` 2)) (min w h `div` 2) [brushKind := BrushTransparent]
      let t = w `div` (n + 1)
      for 1 n (\i -> line dc (pt (x + i * t) (y + h `div` 5)) (pt (x + i * t) (y + h - h `div` 5)) [])
+-}
 
 move :: Properties -> Int -> (Player, Nim) -> (Player, Nim)
 move pr n (p, Nim m) = ((p + 1) `mod` players pr, Nim (m - n))

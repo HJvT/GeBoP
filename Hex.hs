@@ -11,8 +11,8 @@ module Hex (Hex, hex) where
 
 import Game
 import Array
-import Graphics.UI.WX     hiding (border)
-import Graphics.UI.WXCore
+import Graphics.UI.WX     hiding (border, point)
+import Graphics.UI.WXCore hiding (point)
 import Tools
 
 data Hex = Hex (Array (Int, Int) (Maybe Player)) deriving (Eq, Show)
@@ -37,12 +37,13 @@ instance Game Hex where
   showmove pr p (Hex s) i = case allMoves pr p s !! i
                             of (x, y) -> ['a' ..] !! x : show (1 + y)
 
-  value pr p (Hex st) 
+  value pr _p (Hex st) 
     | win st (boardsize pr) 0 = [ 1, -1]
     | win st (boardsize pr) 1 = [-1,  1]
     | otherwise               = [ 0,  0]
 
-  board p pr vart ia move = do
+
+  board p pr vart _ia move' = do
 
     marble <- bitmapCreateLoad "images\\marble.bmp" wxBITMAP_TYPE_ANY
     varg <- varCreate $ grate rectZero 0 (0, 0) sizeZero
@@ -61,7 +62,7 @@ instance Game Hex where
             lin' (Rect x1 y1 w1 h1) (Rect x2 y2 w2 h2) c = do
               line dc (pt (x1 + w1 `div` 2) (y1 + h1)) (pt (x2 + w2 `div` 2) (y2 + h2)) [penWidth := 4, penColor := c]
             lin :: (Int, Int) -> (Int, Int) -> Color -> IO ()
-            lin p q = lin' (field g $ tograte bsz p) (field g $ tograte bsz q)
+            lin p' q = lin' (field g $ tograte bsz p') (field g $ tograte bsz q)
         varSet varg g
         tileBitmap dc r marble
 --{        drawGrate dc g [penColor := yellow]
@@ -78,15 +79,15 @@ instance Game Hex where
                    ) )
 
       onclick :: Point -> IO ()
-      onclick pt = do 
+      onclick point = do 
         t <- varGet vart
         g <- varGet varg
         let Hex st = state t
             bsz = boardsize pr
-            n = fromgrate bsz $ locate g pt
+            n = fromgrate bsz $ locate g point 
         case lookup n $ zip (allMoves pr (player t) st) [0..] of
             Nothing -> return ()
-            Just  i -> move i
+            Just  i -> move' i
 
     set p [ on click    := onclick
           , on paint    := onpaint
@@ -98,9 +99,10 @@ instance Game Hex where
 drawPiece :: DC () -> Rect -> Int -> Maybe Player -> IO ()
 drawPiece dc (Rect x y w h) r mp = do
   circle dc (pt (x + w `div` 2) (y + h)) (max 1 (r `div` 5)) [brushColor := black]
-  case mp of Just 0 -> circle dc (pt (x + w `div` 2) (y + h)) r [brushKind := BrushTransparent, penColor := blue, penWidth := 3]
-             Just 1 -> circle dc (pt (x + w `div` 2) (y + h)) r [brushKind := BrushTransparent, penColor := red , penWidth := 3]
+  case mp of Just 0  -> circle dc (pt (x + w `div` 2) (y + h)) r [brushKind := BrushTransparent, penColor := blue, penWidth := 3]
+             Just 1  -> circle dc (pt (x + w `div` 2) (y + h)) r [brushKind := BrushTransparent, penColor := red , penWidth := 3]
              Nothing -> return ()
+             _       -> error "drawPiece: Unexpected value"
 
 tograte :: Int -> (Int, Int) -> (Int, Int)
 tograte bsz (i, j) = (bsz + i - j, 2 * bsz - 1 - i - j)
@@ -129,24 +131,26 @@ allMoves pr p st
   | otherwise = map fst $ filter ((== Nothing) . snd) $ assocs st
 
 move :: Properties -> HexMove -> (Player, Hex) -> (Player, Hex)
-move pr place (p, Hex s) = (1 - p, Hex $ s // [(place, Just p)])
+move _pr place (p, Hex s) = (1 - p, Hex $ s // [(place, Just p)])
 
 win :: Array (Int, Int) (Maybe Player) -> Int -> Player -> Bool
 win st bsz 0 = any ((== bsz - 1) . snd) $ floodfill st 0 (zip [0 .. bsz - 1] [-1, -1 ..])
 win st bsz 1 = any ((== bsz - 1) . fst) $ floodfill st 1 (zip [-1, -1 ..] [0 .. bsz - 1])
+win _  _   _ = error "win: Unexpected value"
    
 floodfill :: Array (Int, Int) (Maybe Player) -> Player -> [(Int, Int)] -> [(Int, Int)]
 floodfill st p togo = floodfill_ p togo []
  where
   floodfill_ :: Player -> [(Int, Int)] -> [(Int, Int)] -> [(Int, Int)]
-  floodfill_ p []         known = known
-  floodfill_ p (f : togo) known = let new  = filter (not . flip elem known) $ map (f +-) steps
-                                      good = filter (\f -> st ! f == Just p) $ filter (inRange (bounds st)) new
-                                  in floodfill_ p (togo ++ good) (known ++ good)
+  floodfill_ _  []          known = known
+  floodfill_ p' (f : togo') known = let new' = filter (not . flip elem known) $ map (f +-) steps
+                                        good = filter (\f' -> st ! f' == Just p') $ filter (inRange (bounds st)) new'
+                                    in floodfill_ p' (togo' ++ good) (known ++ good)
 
 steps :: [(Int, Int)]
 steps = [(1, 1), (1, 0), (0, -1), (-1, -1), (-1, 0), (0, 1)]
 
+{-
 jumps :: [((Int, Int), [(Int, Int)])]
 jumps = [ (( 2,  1), [( 1,  0), ( 1,  1)])
         , (( 1,  2), [( 0,  1), ( 1,  1)])
@@ -155,7 +159,7 @@ jumps = [ (( 2,  1), [( 1,  0), ( 1,  1)])
         , ((-1, -2), [( 0, -1), (-1, -1)])
         , (( 1, -1), [( 1,  0), ( 0, -1)])
         ]
-
+-}
 
 {- the hexboard internally look like this:
 
