@@ -3,16 +3,16 @@ Synopsis:       Several games
 Description: 
   The games: Ataxx, Bamp, Halma, Hez, Kram, Nim, Reversi, TicTacToe, and Zenix
 Homepage:       http://www.haskell.org/haskellwiki/GeBoP
-Version:        1.7.2
+Version:        1.7.3
 License:        BSD3
 License-file:   LICENSE.txt
 Author:         Maarten Löffler
-Maintainer:     Maarten Löffler <loffler@cs.uu.nl>
+Maintainer:     wxHaskell developer mailing list <wxhaskell-devel@lists.sourceforge.net>
 Stability:      Stable
 Cabal-Version:  >= 1.2
 Build-type:     Simple
 Category:       Game
-Tested-with:    GHC == 6.10.4, GHC == 6.12.1, GHC == 6.12.3
+Tested-with:    GHC == 7.4.1, GHC == 7.4.2, GHC == 7.6.3
 Extra-Source-Files:
                 changelog.txt
                 readme.txt,
@@ -85,38 +85,40 @@ Data-files:     gebop.ico,
                 images/turn.bmp,
                 images/turn_mask.bmp,
                 images/winner.bmp,
-                images/winner_mask.bmp
-                help/brain.html
-                help/gebop.bmp
-                help/index.html
-                help/info_ataxx.html
-                help/info_bamp.html
-                help/info_halma.html
-                help/info_hex.html
-                help/info_kram.html
-                help/info_nim.html
-                help/info_reversi.html
-                help/info_tictactoe.html
-                help/info_zenix.html
-                help/rules_ataxx.html
-                help/rules_bamp.html
-                help/rules_halma.html
-                help/rules_hex.html
-                help/rules_kram.html
-                help/rules_nim.html
-                help/rules_reversi.html
-                help/rules_tictactoe.html
+                images/winner_mask.bmp,
+                help/brain.html,
+                help/gebop.bmp,
+                help/index.html,
+                help/info_ataxx.html,
+                help/info_bamp.html,
+                help/info_halma.html,
+                help/info_hex.html,
+                help/info_kram.html,
+                help/info_nim.html,
+                help/info_reversi.html,
+                help/info_tictactoe.html,
+                help/info_zenix.html,
+                help/rules_ataxx.html,
+                help/rules_bamp.html,
+                help/rules_halma.html,
+                help/rules_hex.html,
+                help/rules_kram.html,
+                help/rules_nim.html,
+                help/rules_reversi.html,
+                help/rules_tictactoe.html,
                 help/rules_zenix.html
 
 Executable gebop
   Build-Depends:
-                base < 5, 
-                wxcore >= 0.11 && < 0.13,
-                wx >= 0.11 && < 0.13,
-                haskell98 < 1.1, 
-                directory < 1.1
+                array     >= 0.4  && < 0.5,
+                base      >= 4.5  && < 4.7, 
+                directory >= 1.1  && < 1.3,
+                random    >= 1.0  && < 1.1,
+                wx        >= 0.11 && < 0.91,
+                wxcore    >= 0.11 && < 0.91
+
   Main-Is:      Main.hs
-  GHC-Options:  "-Wall"
+  GHC-Options:  -Wall -optc-static-libgcc
 
 -- The following can only work, when GeBoP stops printing trace data:
 --  if os(mingw32)

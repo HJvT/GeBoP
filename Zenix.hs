@@ -10,7 +10,7 @@
 module Zenix (Zenix, zenix) where
 
 import Game
-import Array
+import Data.Array
 import Graphics.UI.WX     hiding (border, point)
 import Graphics.UI.WXCore hiding (point)
 import Tools

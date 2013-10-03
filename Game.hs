@@ -1,9 +1,9 @@
-{-# OPTIONS -fglasgow-exts #-}
+{-# LANGUAGE ExistentialQuantification #-}
 
 module Game where
 
 import Graphics.UI.WX hiding (children, value)
-import Array
+import Data.Array
 import Tools
 
 ----------------

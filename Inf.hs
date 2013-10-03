@@ -26,7 +26,7 @@ instance Ord a => Ord (Inf a) where
   compare _                (Infinite True ) = LT
   compare _                (Infinite False) = GT
 
-instance Num a => Num (Inf a) where
+instance (Num a, Eq a) => Num (Inf a) where
   Finite   x     + Finite   y     = Finite (x + y)
   Infinite True  + Infinite False = error "<+inf> + <-inf>"
   Infinite False + Infinite True  = error "<-inf> + <+inf>"

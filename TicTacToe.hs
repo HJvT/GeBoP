@@ -84,10 +84,11 @@ rules _ =    "Tictactoe"
               | otherwise = (i + 3 * j)
         case lookup n (zip (map snd $ possiblemoves st) [0..]) of
           Nothing -> return ()
-          Just n'  -> move' n'
+          Just n' -> move' n'
 
-    set p [ on click := onclick
-          , on paint := onpaint
+    set p [ on click  := onclick
+          , on paint  := onpaint
+          , on resize := repaint p
           ]
           
     return ()
@@ -97,12 +98,24 @@ possiblemoves st = filter ((== Nothing) . fst) $ zip st [0 .. 8]
 
 drawCross :: DC () -> Rect -> IO ()
 drawCross dc (Rect x y w h) =
-  do line dc (pt (x + w `div` 10) (y + h `div` 10)) (pt (x + w - w `div` 10) (y + h - h `div` 10)) [penColor := blue, penWidth := 2]
-     line dc (pt (x + w `div` 10) (y + h - h `div` 10)) (pt (x + w - w `div` 10) (y + h `div` 10)) [penColor := blue, penWidth := 2]
+  do line
+       dc
+       (pt (x + w `div` 10) (y + h `div` 10))
+       (pt (x + w - w `div` 10) (y + h - h `div` 10))
+       [penColor := blue, penWidth := 2]
+     line
+       dc
+       (pt (x + w `div` 10) (y + h - h `div` 10))
+       (pt (x + w - w `div` 10) (y + h `div` 10))
+       [penColor := blue, penWidth := 2]
 
 drawCircle :: DC () -> Rect -> IO ()
 drawCircle dc (Rect x y w h) =
-  do circle dc (pt (x + w `div` 2) (y + h `div` 2)) (2 * (min w h) `div` 5) [penColor := red, penWidth := 2, brushKind := BrushTransparent]
+  do circle
+       dc
+       (pt (x + w `div` 2) (y + h `div` 2))
+       (2 * (min w h) `div` 5)
+       [penColor := red, penWidth := 2, brushKind := BrushTransparent]
 
 move :: Int -> (Player, TicTacToe) -> (Player, TicTacToe)
 move n (p, TicTacToe s) = (1 - p, TicTacToe $ (n |> Just p) s)

@@ -6,7 +6,7 @@
 module Halma (Halma, halma) where
 
 import Game
-import Array
+import Data.Array
 -- import Graphics.UI.WX
 import Graphics.UI.WX     hiding (border, empty, point)
 import Graphics.UI.WXCore hiding (empty, point)
@@ -231,7 +231,7 @@ move pr (f, t) (p, Halma s) = ( (p + 1) `mod` players pr
                               , Halma $ s // [(f, Nothing), (t, Just p)]
                               )
 
-startpos :: (Num t, Num t1, Enum t1) => t -> [(t1, t1)]
+startpos :: (Eq t, Num t, Num t1, Enum t1) => t -> [(t1, t1)]
 startpos 0 = [(x, y) | x <- [-4 .. -1], y <- [x + 5 ..     4]]
 startpos 1 = [(x, y) | x <- [-8 .. -5], y <- [  - 4 .. x + 4]]
 startpos 2 = [(x, y) | x <- [-4 .. -1], y <- [x - 4 ..   - 5]]

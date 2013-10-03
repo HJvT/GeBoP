@@ -6,7 +6,7 @@
 module Ataxx (Ataxx, ataxx) where
 
 import Game
-import Array
+import Data.Array
 -- import Graphics.UI.WX
 import Graphics.UI.WX     hiding (border, point)
 import Graphics.UI.WXCore hiding (point)

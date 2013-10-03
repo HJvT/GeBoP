@@ -9,8 +9,8 @@ module Tools
   , module Tools
   ) where
 
-import Random
-import List
+import System.Random
+import Data.List
 
 import Graphics.UI.WX
 import Graphics.UI.WXCore

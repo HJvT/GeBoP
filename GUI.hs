@@ -1,4 +1,4 @@
-﻿{-# OPTIONS -fglasgow-exts #-}
+﻿{-# LANGUAGE ExistentialQuantification #-}
 
 ---------
 -- GUI -- 
@@ -9,18 +9,19 @@ module GUI (gui, version) where
 import Game               -- hiding (name)
 import Graphics.UI.WX     hiding (bitmap, children, click, selections, stop)
 import Graphics.UI.WXCore
-import Char
+import Data.Char
 import Tools              hiding (field)
-import List
+import Data.List
 
 version :: String
-version = "1.7.2" 
+version = "1.7.3" 
+
 
 gui :: [GeneralGame] -> IO ()
 gui games = do
 
   {--== CREATION PHASE ==--}
-
+  
   f <- mdiParentFrame []
   c <- mdiParentFrameGetClientWindow f
   
@@ -37,26 +38,26 @@ gui games = do
 
   logo   <- bitmapCreateLoad "images\\gebop.bmp" wxBITMAP_TYPE_ANY
 
-  {--== DEFENITION PHASE ==--}
-
+  {--== DEFINITION PHASE ==--}
+  
   let onpaint :: DC () -> Rect -> IO ()
       onpaint dc r = do
         tileBitmap dc r logo
 
   {--== MODIFICATION PHASE ==--}
-
+  
   set mGame  [ text := "&Game"                                                      ]
   set iNew   [ text := "&New Game\tCtrl+N", help := "Start a new game"              , on command := newgame f games] 
   set iQuit  [                              help := "Quit the application"          , on command := close f] 
   set iHelp  [ text := "&Contents"        , help := "Show the contents of GeBoP"    , on command := html f "help\\index.html"]
   set iAbout [                              help := "Information about this program", on command := infoDialog f "About GeBoP" about]
 
-  set f [ visible           := True
-        , clientSize        := sz 640 480
-        , picture           := "gebop.ico"
-        , text              := "GeBoP"
-        , menuBar           := [mGame, mHelp] 
-        , statusBar         := [field]
+  set f [ visible     := True
+        , clientSize  := sz 640 480
+        , picture     := "gebop.ico"
+        , text        := "GeBoP"
+        , menuBar     := [mGame, mHelp] 
+        , statusBar   := [field]
         ]
   
   set c [ on paint    := onpaint
@@ -196,7 +197,7 @@ game mdiparent g pr newg = do
 
 --{  field <- statusField []
 
-  {--== DEFENITION PHASE ==--}
+  {--== DEFINITION PHASE ==--}
 
   let 
   
@@ -234,7 +235,9 @@ game mdiparent g pr newg = do
       for 0 (floor $ 19 * val t !!! i) (\j -> line dc (pt (xi + 1) (80 - j)) (pt (xi + 39) (80 - j)) [penColor := green])
       for (floor $ 18 * val t !!! i) 0 (\j -> line dc (pt (xi + 1) (80 - j)) (pt (xi + 39) (80 - j)) [penColor := red  ])
       line dc (pt xi 80) (pt (xi + 40) 80) []
-      if player t == i && movesnr t > 0 then drawBitmap dc turn (pt xi 110) True [] else return ()
+      if player t == i && movesnr t > 0
+        then drawBitmap dc turn (pt xi 110) True []
+        else return ()
       drawBitmap dc (if human pr !!! i then humanbmp else computerbmp) (pt xi 160) True []
       ifIO (win i) $ drawBitmap dc winner (pt xi 110) True []
 
@@ -261,8 +264,7 @@ game mdiparent g pr newg = do
               , bgcolor    := setLum 0.95 $ colorplayer i
               , visible    := not (human pr !!! i)
               ]
-      set but [ clientSize := sz 60 20
-              , text       := "move now"
+      set but [ text       := "move now"
               , color      := setLum 0.25 $ colorplayer i
               , bgcolor    := setLum 0.95 $ colorplayer i
               , on command := oncommand i
@@ -293,7 +295,8 @@ game mdiparent g pr newg = do
       let b = (bs !!! p')
       i <- get b itemCount
       vs <- mapM (\p'' -> get (bs !!! p'') (item $ i - 1)) [p' .. length bs - 1]
-      when (not $ all null vs) $ mapM_ (\b' -> itemAppend b' "") bs
+      when (not $ all null vs) $
+        mapM_ (\b' -> itemAppend b' "") bs
       i' <- get b itemCount
       set b [item (i' - 1) := s]
       mapM_ (\b' -> set b' [selection := i' - 1]) bs
@@ -440,14 +443,18 @@ brain mdiparent pr vart varb newg = do
 
   {--== CREATION PHASE ==--}
 
+  let extraInfo = \_ -> return () -- "info" if you want tracing
   f <- mdiChildFrame mdiparent []
+  extraInfo "mdiChildFrame"
   sw <- splitterWindow f []
+  extraInfo "splitterWindow"
  
   pLeft  <- panel sw []
   pRight <- panel sw []
   pBoard <- panel pRight []
   pValue <- panel pRight []
   pInfo  <- panel pRight []
+  extraInfo "panel"
 
   mGame  <- menuPane         []
   iNew   <- menuItem  mGame  []
@@ -461,24 +468,28 @@ brain mdiparent pr vart varb newg = do
   iHelp  <- menuItem  mHelp  []
   iBrain <- menuItem  mHelp  []
   iAbout <- menuAbout mHelp  []
+  extraInfo "menu"
 
   logos  <- mapM (bitmap.nameplayer) [0 .. 5]
   winner <- bitmap "winner"
   leeg   <- bitmap "empty"
 
-  bPlayer   <- staticBitmapCreate pRight (-1) (logos !!! 0) rectNull (-1)
+  bPlayer   <- staticBitmapCreate pRight (-1) (logos !!! 0) rectNull 0x00200000 -- 0x00200000 == wxBORDER_NONE
+  extraInfo "staticBitmapCreate"
 
   -- tPlayer   <- staticText pRight []
   tMind     <- staticText pInfo []
   tMaxd     <- staticText pInfo []
   tVolume   <- staticText pInfo []
+  extraInfo "staticText"
 
   tc <- treeCtrl pLeft []
+  extraInfo "treeCtrl"
 
   g <- varGet vart >>= return . state
   varu <- varCopy vart
 
-  {--== DEFENITION PHASE ==--}
+  {--== DEFINITION PHASE ==--}
 
   let 
 

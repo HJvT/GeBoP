@@ -6,8 +6,7 @@
 module Reversi (Reversi, reversi) where
 
 import Game
-import Array
--- import Graphics.UI.WX
+import Data.Array
 import Graphics.UI.WX     hiding (border)
 import Graphics.UI.WXCore
 import Tools
