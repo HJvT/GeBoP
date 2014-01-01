@@ -13,8 +13,14 @@ import Data.Char
 import Tools              hiding (field)
 import Data.List
 
+import Data.Version      (versionBranch)
+import qualified Paths_GeBoP as Paths -- (version)
+
+
 version :: String
-version = "1.7.3" 
+version = a ++ "." ++ b ++ "." ++ c
+  where
+    (a : b : c : _) = map show $ versionBranch Paths.version ++ repeat 0
 
 
 gui :: [GeneralGame] -> IO ()
