@@ -12,7 +12,7 @@ Version 1.7.3
    wxHaskell 0.90.1.0. Amongst others, hierarchical module system
    introduced. GUI.hs: staticBitmapCreate has now 0x00200000
    (== wxBORDER_NONE) as style, as wxWidgets does not accept -1 as style
-   anymore. The clientsize of the ¨move now¨ button is not set anymore,
+   anymore. The clientsize of the "move now" button is not set anymore,
    so the text fits. TicTacToe now repaints on resize
 
 
