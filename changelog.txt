@@ -1,8 +1,9 @@
 
-2013-12-31
+2014-08-13
 
 Version 1.7.4
  - The version info is read from the .cabal file.
+ - Removed upper limits for wx and wxcore version
 
 
 2013-09-20
