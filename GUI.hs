@@ -7,8 +7,8 @@
 module GUI (gui, version) where
 
 import Game               -- hiding (name)
-import Graphics.UI.WX     hiding (bitmap, children, click, selections, stop)
-import Graphics.UI.WXCore
+import Graphics.UI.WX     hiding (bitmap, children, click, next, selections, stop)
+import Graphics.UI.WXCore hiding (win)
 import Data.Char
 import Tools              hiding (field)
 import Data.List
