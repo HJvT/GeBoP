@@ -1,4 +1,14 @@
 
+2014-12-10
+
+Version 1.7.4.1
+ Changes in .cabal file
+  - Removed upper limits for versions of Haskell Platform packages
+  - Added address of repository
+  - Removed lower limit for wxcore, as the wxcore version is defined by wx
+  - Added -optl-s -j to GHC-Options
+ 
+ 
 2014-08-13
 
 Version 1.7.4
