@@ -1,4 +1,5 @@
-﻿{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleContexts          #-}
 
 ---------
 -- GUI -- 

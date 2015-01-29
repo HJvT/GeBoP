@@ -9,7 +9,7 @@ License-file:   LICENSE.txt
 Author:         Maarten Löffler
 Maintainer:     wxHaskell developer mailing list <wxhaskell-devel@lists.sourceforge.net>
 Stability:      Stable
-Cabal-Version:  >= 1.6
+Cabal-Version:  >= 1.18
 Build-type:     Simple
 Category:       Game
 Tested-with:    GHC == 7.6.3, GHC == 7.8.3

@@ -1,5 +1,5 @@
 
-2014-12-10
+2015-01-29
 
 Version 1.7.4.1
  Changes in .cabal file
@@ -7,6 +7,9 @@ Version 1.7.4.1
   - Added address of repository
   - Removed lower limit for wxcore, as the wxcore version is defined by wx
   - Added -optl-s -j to GHC-Options
+ Other changes
+  - Added FlexibleContexts pragma to GUI.hs, to satisfy GHC 7.10
+  - Removed Byte Order Mark from GUI.hs, to satisfy GHC 7.10
  
  
 2014-08-13
