@@ -3,10 +3,10 @@
 
 Version 1.7.4.1
  Changes in .cabal file
-  - Removed upper limits for versions of Haskell Platform packages
+  - Removed upper limits for versions of Haskell Platform packages (except base)
   - Added address of repository
   - Removed lower limit for wxcore, as the wxcore version is defined by wx
-  - Added -optl-s -j to GHC-Options
+  - Added "Default-language: Haskell2010"
  Other changes
   - Added FlexibleContexts pragma to GUI.hs, to satisfy GHC 7.10
   - Removed Byte Order Mark from GUI.hs, to satisfy GHC 7.10
