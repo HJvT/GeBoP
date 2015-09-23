@@ -1,4 +1,31 @@
 
+2015-09-23
+
+Version 1.7.5
+ - Game.hs: changed call to "update" in "Game.update" to avoid confusion
+   with the recently introduced "update" in wxHaskell
+ 
+ 
+2015-01-29
+
+Version 1.7.4.1
+ Changes in .cabal file
+  - Removed upper limits for versions of Haskell Platform packages (except base)
+  - Added address of repository
+  - Removed lower limit for wxcore, as the wxcore version is defined by wx
+  - Added "Default-language: Haskell2010"
+ Other changes
+  - Added FlexibleContexts pragma to GUI.hs, to satisfy GHC 7.10
+  - Removed Byte Order Mark from GUI.hs, to satisfy GHC 7.10
+ 
+ 
+2014-08-13
+
+Version 1.7.4
+ - The version info is read from the .cabal file.
+ - Removed upper limits for wx and wxcore version
+
+
 2013-09-20
 
 Version 1.7.3
@@ -6,8 +33,8 @@ Version 1.7.3
    wxHaskell 0.90.1.0. Amongst others, hierarchical module system
    introduced. GUI.hs: staticBitmapCreate has now 0x00200000
    (== wxBORDER_NONE) as style, as wxWidgets does not accept -1 as style
-   anymore. The clientsize of the ¨move now¨ button is not set anymore,
-   so the text fits. TicTacToe now repainted on resize
+   anymore. The clientsize of the "move now" button is not set anymore,
+   so the text fits. TicTacToe now repaints on resize
 
 
 2010-10-20

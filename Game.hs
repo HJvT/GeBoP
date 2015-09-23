@@ -144,7 +144,7 @@ step :: Game g => [Int] -> Tree g -> Tree g
 step []     t = grow t
 step (i:is) t 
   | filled t  = let u = step is (children t ! i)
-                in  update i $ t {children = children t // [(i, u)]}
+                in  Game.update i $ t {children = children t // [(i, u)]}
   | otherwise = grow t
 
 followcombination :: Game g => Tree g -> [Int]

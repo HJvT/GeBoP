@@ -12,7 +12,7 @@ module Hex (Hex, hex) where
 import Game
 import Data.Array
 import Graphics.UI.WX     hiding (border, point)
-import Graphics.UI.WXCore hiding (point)
+import Graphics.UI.WXCore hiding (point, win)
 import Tools
 
 data Hex = Hex (Array (Int, Int) (Maybe Player)) deriving (Eq, Show)

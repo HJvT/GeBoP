@@ -1,18 +1,18 @@
 Name:           GeBoP
 Synopsis:       Several games
 Description: 
-  The games: Ataxx, Bamp, Halma, Hez, Kram, Nim, Reversi, TicTacToe, and Zenix
+  The games: Ataxx, Bamp, Halma, Hez, Kram, Nim, Reversi, TicTacToe and Zenix
 Homepage:       http://www.haskell.org/haskellwiki/GeBoP
-Version:        1.7.3
+Version:        1.7.5
 License:        BSD3
 License-file:   LICENSE.txt
 Author:         Maarten Löffler
 Maintainer:     wxHaskell developer mailing list <wxhaskell-devel@lists.sourceforge.net>
 Stability:      Stable
-Cabal-Version:  >= 1.2
+Cabal-Version:  >= 1.18
 Build-type:     Simple
 Category:       Game
-Tested-with:    GHC == 7.4.1, GHC == 7.4.2, GHC == 7.6.3
+Tested-with:    GHC == 7.6.3, GHC == 7.8.3
 Extra-Source-Files:
                 changelog.txt
                 readme.txt,
@@ -108,14 +108,19 @@ Data-files:     gebop.ico,
                 help/rules_tictactoe.html,
                 help/rules_zenix.html
 
+Source-repository head
+  Type:         git
+  Location:     git://github.com/wxHaskell/GeBoP.git
+
 Executable gebop
+  Default-language: Haskell2010
   Build-Depends:
-                array     >= 0.4  && < 0.5,
-                base      >= 4.5  && < 4.7, 
-                directory >= 1.1  && < 1.3,
-                random    >= 1.0  && < 1.1,
-                wx        >= 0.11 && < 0.91,
-                wxcore    >= 0.11 && < 0.91
+                array     >= 0.4,
+                base      >= 4.5 && < 5, 
+                directory >= 1.1,
+                random    >= 1.0,
+                wx        >= 0.11,
+                wxcore
 
   Main-Is:      Main.hs
   GHC-Options:  -Wall -optc-static-libgcc

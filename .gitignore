@@ -17,6 +17,10 @@ dist/
 # cabal-dev
 cabal-dev/
 
+# Cabal sandbox
+.cabal-sandbox
+cabal.sandbox.config
+
 # generated config files
 config/
 

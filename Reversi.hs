@@ -89,7 +89,7 @@ instance Game Reversi where
         t <- varGet vart
         g <- varGet varg
         let Reversi st = state t
-            n          = Just $ locate g point' 	
+            n          = Just $ locate g point'
         case lookup n $ zip (allMoves (boardsize pr) (player t) st) [0..] of
           Nothing -> return ()
           Just  i -> move' i

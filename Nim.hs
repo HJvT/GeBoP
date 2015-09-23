@@ -6,7 +6,7 @@
 module Nim (Nim, nim) where
 
 import Game
-import Graphics.UI.WX
+import Graphics.UI.WX hiding (prev)
 -- import Graphics.UI.WXCore
 import Tools
 
