@@ -1,9 +1,9 @@
 Name:           GeBoP
 Synopsis:       Several games
 Description: 
-  The games: Ataxx, Bamp, Halma, Hez, Kram, Nim, Reversi, TicTacToe, and Zenix
+  The games: Ataxx, Bamp, Halma, Hez, Kram, Nim, Reversi, TicTacToe and Zenix
 Homepage:       http://www.haskell.org/haskellwiki/GeBoP
-Version:        1.7.4.1
+Version:        1.7.5
 License:        BSD3
 License-file:   LICENSE.txt
 Author:         Maarten Löffler
